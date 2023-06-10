@@ -1,7 +1,4 @@
 from dotenv import load_dotenv
-from langchain.document_loaders import UnstructuredMarkdownLoader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import Chroma
 import os
 
 # Load environment variables from .env file
@@ -19,7 +16,7 @@ def get_file_names():
     file_names.remove('.obsidian')
     return file_names
 
-def update_markdown_file(file_name, new_text):
+def create_or_update_markdown_file(file_name, new_text):
     """
     Overwrites the contents of a markdown file with new text.
 
@@ -30,11 +27,20 @@ def update_markdown_file(file_name, new_text):
     with open(f"./alexandria/{file_name}", "w", encoding="utf-8") as f:
         f.write(new_text)
 
+def get_markdown_file_contents(file_name):
+    """
+    Returns the contents of a markdown file.
+
+    Args:
+        file_path (str): The path to the markdown file.
+    """
+    with open(f"./alexandria/{file_name}", "r", encoding="utf-8") as f:
+        text = f.read()
+    return text
+
 
 if __name__ == "__main__":
 
     # Get the list of file names in the "alexandria" folder
     file_names = get_file_names()
-    # Overwrite the first file in the list
-    update_markdown_file(file_names[0], "This is a test.")
-
+    print(f"File names: {file_names}")
