@@ -9,25 +9,15 @@ from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain.agents import initialize_agent
 
 
-class CircumferenceTool(BaseTool):
-    name = "Circumference calculator"
-    description = "use this tool when you need to calculate a circumference using the radius of a circle"
-
-    def _run(self, radius: Union[int, float]):
-        return float(radius)*2.0*pi
-    
-    def _arun(self, radius: Union[int, float]):
-        raise NotImplementedError("This tool does not support async")
-
-
 class NoteMakingTool(BaseTool):
     name = "NoteMaker"
-    description = "use this tool when you need to make a note"
+    description = "Give this tool a message with your note when you need to make or edit an exisiting note. It will overwrite existing note. Your message should be in the following format: <file title> | <your note>"  # noqa: E501
 
     def _run(self, new_text: str):
-        file_name = new_text.split(" ")[0]
-        with open(f"./alexandria/{file_name}.md", "w", encoding="utf-8") as f:
-            f.write(new_text)
+        file_name = new_text.split("|")[0]
+        with open(f"./alexandria/{file_name}", "w", encoding="utf-8") as f:
+            f.write(new_text.split("|")[1])
+        return f"Created a note called {file_name}"
     
     def _arun(self, radius: Union[int, float]):
         raise NotImplementedError("This tool does not support async")
@@ -71,7 +61,7 @@ conversational_memory = ConversationBufferWindowMemory(
 )
 
 
-tools = [CircumferenceTool(), NoteMakingTool()]
+tools = [NoteMakingTool()]
 
 # initialize agent with tools
 agent = initialize_agent(
@@ -84,10 +74,22 @@ agent = initialize_agent(
     memory=conversational_memory
 )
 
-system_message = """ 
+notes = get_file_names()
 
+system_message = f""" 
+Assistant is a large language model trained by OpenAI.
 
-"""
+Assistant is designed to be able to assist with note taking tasks, which is editing and building upon notes based on given articles or blocks of text provided by user, answering simple questions based on created notes, providing in-depth explanations and discussions on a wide range of topics. 
+As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
+
+Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. 
+Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
+
+Assistant has access to note editing, note creation, note reading, and note searching tools. 
+
+Here is a list of notes that exist: {notes}
+
+"""  # noqa: E501
 
 if __name__ == "__main__":
 
@@ -98,6 +100,5 @@ if __name__ == "__main__":
 
     agent.agent.llm_chain.prompt = new_prompt
 
-    notes = get_file_names()
     # existing prompt
-    print(agent.agent.llm_chain.prompt.messages[0].prompt.template)
+    agent("Can you create a note on the topic of 'artificial intelligence'?")
